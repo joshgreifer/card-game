@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grid Layout Test</title>
+    <style>
+
+        .hidden {
+            display: none;
+        }
+        .app-container {
+            font-size: 16px;
+            font-family: Arial;
+            display: grid;
+            grid-template-rows: 100px 1fr 100px;
+            grid-template-columns: 1fr 400px;
+            grid-template-areas:
+                    "hd hd"
+        "pages console"
+        "ft ft";
+        }
+        .pages {
+            grid-area: pages;
+        }
+
+        .header {
+            grid-area: hd;
+            background-color: #4a4add;
+
+        }
+
+        .footer {
+            grid-area: ft;
+            background-color: #6363ba;
+        }
+
+        .console {
+            grid-area: console;
+        }
+
+        .console {
+            font-size: 13px;
+            white-space: pre;
+
+            background-color: black;
+            color: #BCD631;
+            font-family: 'Lucida Console', Monaco, monospace;
+            scroll-snap-align: end;
+            overflow: auto;
+            /* height: 50vh; */
+            overflow-y: scroll;
+            overflow-x: scroll;
+            overscroll-behavior-y: contain;
+            scroll-snap-type: y mandatory;
+            grid-area: console;
+        }
+
+
+        .console-output .error {
+            color: #d60619;
+        }
+        .console-output .info {
+            color: #76fc57;
+        }
+        .console-output .warn {
+            color: #ff8400;
+        }
+
+        .barter-game-container {
+            display: grid;
+            grid-template-rows:1fr 1fr 1fr;
+            grid-template-columns: 3fr 1fr;
+            grid-template-areas:
+                    "therapist-stock therapist-status"
+                    "auction-stock auction-item"
+                    "subject-stock subject-status"
+        ;
+        }
+
+        .stock {
+            border: 1px black;
+            --card-spacing: 40px;
+            --num-cards: 52;
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
+        }
+        .status {
+            background-image: linear-gradient(#ffffff, #2a4881, #ffffff);
+            grid-area: status;
+            color: black;
+            display: grid;
+            grid-template-rows: 4fr 1fr;
+            grid-template-areas:
+                    "indicator"
+                    "buttons";
+        }
+        .player-buttons {
+            grid-area: buttons;
+        }
+        .player-indicator {
+            grid-area: indicator;
+        }
+
+    </style>
+ </head>
+<body>
+<playing-card value="JC"></playing-card>
+<div class="app-container">
+    <div class="header">
+        <span>Header</span>
+        <button onclick="switchToPage('page-1')">Page 1</button>
+        <button onclick="switchToPage('page-2')">Page 2</button>
+        <button onclick="switchToPage('page-3')">Page 3</button>
+    </div>
+    <div class="pages">
+        <div class="page" id="page-1">
+            <playing-card value="KS"></playing-card>
+        </div>
+        <div class="page" id="page-2">
+            <div class="barter-game-container">
+
+                <div class="stock" style="grid-area: therapist-stock">
+                    <playing-card value="9C"></playing-card>
+                </div>
+                <div class="subject"></div>
+            </div>
+        </div>
+        <div class="page" id="page-3">
+            <playing-card value="2D" face-down="true"></playing-card>
+        </div>
+    </div>
+    <div class="footer">
+        <span>Footer</span>
+    </div>
+</div>
+
+<script>
+    // Disable MS Edge (and probably Chrome) context menus in OSX
+    document.addEventListener('contextmenu', event => { event.preventDefault() })
+
+    function switchToPage(page_id) {
+        const pages = document.querySelectorAll('.page');
+        for (const page of pages) {
+            if (page.id === page_id)
+                page.classList.remove('hidden');
+            else
+                page.classList.add('hidden');
+        }
+    }
+    switchToPage('page-1');
+
+</script>
+<script src="Card.js"></script>
+
+</body>
+
+</html>
