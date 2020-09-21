@@ -1,0 +1,23 @@
+{
+  "dependencies": {
+    "@types/webpack-env": "^1.15.1",
+    "copy-webpack-plugin": "^6.0.3",
+    "eventemitter3": "^4.0.0",
+    "typescript": "^3.7.5"
+  },
+  "devDependencies": {
+    "ts-loader": "^6.2.1",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.11.0"
+  },
+  "name": "card-game",
+  "scripts": {
+    "build-and-serve": "webpack --config webpack.config.js --mode=development --env.NODE_ENV=development && webpack-dev-server  dist/",
+    "build": "webpack --config webpack.config.js --mode=development --env.NODE_ENV=development",
+    "build-prod": "webpack --config webpack.config.js --mode=production --env.NODE_ENV=production",
+    "serve": "webpack-dev-server --config webpack.config.js --mode=development --env.NODE_ENV=development",
+    "serve-prod": "webpack-dev-server --config webpack.config.js --mode=production --env.NODE_ENV=production"
+  },
+  "version": "1.0.0"
+}

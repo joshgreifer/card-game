@@ -1,9 +1,9 @@
 
 // Playing Card
-class Card extends HTMLElement {
+export class Card extends HTMLElement {
     private static top_z_index = 0;
-    private static  readonly deck_img = `cards_deck.svg`;
-    private static  readonly back_img = `card_back.svg`;
+    private static  readonly deck_img = `${__webpack_public_path__}/assets/img/cards_deck.svg`;
+    private static  readonly back_img = `${__webpack_public_path__}/assets/img/card_back.svg`;
 
     private static readonly original_grid_x = 390;
     private static readonly original_grid_y = 570;
@@ -12,7 +12,7 @@ class Card extends HTMLElement {
     private static readonly original_origin_x = 30;
     private static readonly original_origin_y = 30;
 
-    private static readonly scale = 1/3;
+    private static readonly scale = 1/4;
 
     public static readonly width = Math.round(Card.original_width * Card.scale);
     public static readonly height = Math.round(Card.original_height * Card.scale);
@@ -340,7 +340,7 @@ The 'layout' property controls how the stock appears:
 
 
  */
-class Stock extends HTMLElement {
+export class Stock extends HTMLElement {
     protected _el!: HTMLDivElement;
     protected _style: HTMLStyleElement;
 
@@ -354,6 +354,52 @@ class Stock extends HTMLElement {
         const shadow = this.attachShadow({mode: 'open'}); // sets and returns 'this.shadowRoot'
         const el = <HTMLDivElement>document.createElement('div');
         const style = document.createElement('style');
+        // noinspection CssInvalidPropertyValue
+        style.textContent = `
+        .fan {
+            height: ${Card.height + 20}px;
+            border: 1px black;
+            --card-spacing:${(Card.width / 3).toFixed(0)}px;
+            --num-cards:13;
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
+        }
+        .fan.horizontal {}
+        
+        .fan.vertical {
+            width: ${Card.width + 20}px;
+            border: 1px black;
+            --card-spacing:${(Card.width / 3).toFixed(0)}px;
+            --num-cards:13;
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-rows: repeat(var(--num-cards), var(--card-spacing));
+        }
+        .pile {
+            height: ${Card.height + 20}px;
+            border: 1px black;
+            --card-spacing: 2px;
+            --num-cards: 52;
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
+        }
+        
+        .grid {
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-columns: repeat(13, auto);
+            grid-template-rows: repeat(4, auto);
+        }
+
+`;
+        // Override layout value if specified in 'layout' attribute
+        const layout_attr = this.getAttribute('layout');
+        if (layout_attr !== null)
+            layout = layout_attr;
+
+        el.classList.add(...layout.split(' '));
 
         const face_down = this.getAttribute('face-down');
 
@@ -374,50 +420,18 @@ class Stock extends HTMLElement {
         }
 
 
-        el.className = layout;
+        // Append cards in ctor parameters to container div
+        this.add(...cards);
+
+        // Append children of this node which are Cards to container div
+        cards = Array.from(this.querySelectorAll('playing-card'))
+        this.add(...cards);
+
+        shadow.append( style, el);
 
         this._el = el;
         this._style = style;
 
-
-        // Append cards ctor parameters to container div
-        for (const c of cards) {
-            c.FaceDown = (face_down === 'true');
-            el.append(c);
-        }
-        el.append(...cards);
-
-        // Append children of this node to container div
-        cards = Array.from(this.querySelectorAll('playing-card'))
-        for (const c of cards) {
-            c.FaceDown = (face_down === 'true');
-            el.append(c);
-        }
-
-        // noinspection CssInvalidPropertyValue
-        style.textContent = `
-        .fan {
-            height: ${Card.height + 20}px;
-            border: 1px black;
-            --card-spacing: 40px;
-            --num-cards:13;
-            background-image: linear-gradient(#529610, #2f5609);
-            display: grid;
-            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
-        }
-        .pile {
-            height: ${Card.height + 20}px;
-            border: 1px black;
-            --card-spacing: 2px;
-            --num-cards: 52;
-            background-image: linear-gradient(#529610, #2f5609);
-            display: grid;
-            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
-        }
-
-`;
-
-        shadow.append( style, el);
     }
 
 
@@ -433,13 +447,10 @@ class Stock extends HTMLElement {
 
 
 }
-customElements.define('card-stock', Stock);
 
-
-class DeckStock extends Stock {
+export class DeckStock extends Stock {
     constructor() {
         super('pile', ...new Deck().shuffle());
 
     }
 }
-customElements.define('deck-stock', DeckStock);
