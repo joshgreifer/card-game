@@ -77,6 +77,7 @@ class Card extends HTMLElement {
         const img_el = this.ImgElement;
 
         if (raised) {
+            img_el.style.zIndex = `${++Card.top_z_index}`;
 
             img_el.classList.add('raised');
         } else {
@@ -108,7 +109,10 @@ class Card extends HTMLElement {
 
     private _face_down: boolean = false;
     get FaceDown() : boolean { return this._face_down; }
-    set FaceDown(face_down: boolean) { this._face_down = face_down;  this._img_el.src = face_down ?  Card.back_img : this._img_src; }
+    set FaceDown(face_down: boolean) {
+        this._face_down = face_down;
+        this._img_el.src = face_down ?  Card.back_img : this._img_src;
+    }
 
     static get observedAttributes() : string[] { return ['face-down']}
 
@@ -132,7 +136,8 @@ class Card extends HTMLElement {
             img_el.src =  `${Card.deck_img}#svgView(viewBox(${card_x} ${card_y}, ${cw}, ${ch}))`;
             img_el.width = Card.width;
             img_el.height = Card.height;
-
+            el.style.width = Card.width + 'px';
+            el.style.height = Card.height + 'px';
             el.appendChild(img_el);
             const this_ = this;
 
@@ -144,6 +149,7 @@ class Card extends HTMLElement {
 
                 const face_down = this_.FaceDown;
 
+
                 const offsetX = e.clientX - parseInt(window.getComputedStyle(el).left);
                 const offsetY = e.clientY - parseInt(window.getComputedStyle(el).top);
 
@@ -153,12 +159,13 @@ class Card extends HTMLElement {
                 if (e.getModifierState('Shift'))
                     this_.Selected =  !this_.Selected;
 
-                if (e.getModifierState('Alt'))
-                    this_.Raised =  !this_.Raised;
 
                 function drag(e: MouseEvent) {
                     if (!dragged) {
                         dragged = true;
+                        if (!e.getModifierState('Alt'))
+                            this_.Raised =  true;
+
                     }
                     el.style.top = (e.clientY - offsetY) + 'px';
                     el.style.left = (e.clientX - offsetX) + 'px';
@@ -171,15 +178,19 @@ class Card extends HTMLElement {
                     // el.style.top = (e.clientY - offsetY) + 'px';
                     // el.style.left = (e.clientX - offsetX) + 'px';
                     el.style.top = el.style.left = '';
+                    this_.Raised = false;
+                    this_.FaceDown = face_down;
                     if (dragged) {
                         const droppedElements = document.elementsFromPoint(e.x, e.y);
-
+                        for (const drop_target of droppedElements)
+                            if(drop_target instanceof Stock)
+                                drop_target.add(this_);
                         if (this_._drop_callback && droppedElements !== null)
                             this_._drop_callback(droppedElements);
 
                     }
 
-                    this_.FaceDown = face_down;
+
                 }
 
                 window.addEventListener('mousemove', drag);
@@ -218,7 +229,7 @@ class Card extends HTMLElement {
         }
         .card.selected {
             border-radius: 10px;
-            box-shadow: 0 0 5px #ff6f00;
+            box-shadow: 0 0 10px #ff6f00;
         }
             `;
             this._style = style;
@@ -255,16 +266,32 @@ customElements.define('playing-card', Card);
 //     }
 // }
 //
-// class Deck extends Cards {
-//     constructor() {
-//         super();
-//         for (let suit = 0; suit < Card.SuitNames.length; ++suit)
-//             for (let value = 0; value < Card.FaceNames.length; ++value) {
-//                 this.push(new Card(suit, value));
-//             }
-//     }
-//
-// }
+
+class Deck extends Array<Card> {
+    shuffle: () => Deck;
+
+    constructor() {
+        super();
+        for (let suit = 0; suit < Card.SuitNames.length; ++suit)
+            for (let value = 0; value < Card.FaceNames.length; ++value) {
+                this.push(new Card(suit, value));
+            }
+        this.shuffle = () => {
+            const cards = this;
+            // Knuth shuffle
+            for (let i = cards.length; i > 0;) {
+                const j = Math.floor(Math.random() * i);
+                --i;
+                const tmp = cards[i];
+                cards[i] = cards[j];
+                cards[j] = tmp;
+            }
+            return this;
+        }
+    }
+
+
+}
 
 
 /*
@@ -278,75 +305,105 @@ The 'layout' property controls how the stock appears:
 
  */
 class Stock extends HTMLElement {
-    private _el!: HTMLDivElement;
-    private _style!: HTMLStyleElement;
+    protected _el!: HTMLDivElement;
+    protected _style: HTMLStyleElement;
+
+    sort: (by: string[]) => void;
+    add: (...cards: Card[]) => void;
+    deal: (to: Stock, ...cards: Card[]) => void;
 
 
-    constructor(...cards: Card[]) {
+    constructor(layout: string = 'fan', ...cards: Card[]) {
         super();
         const shadow = this.attachShadow({mode: 'open'}); // sets and returns 'this.shadowRoot'
+        const el = <HTMLDivElement>document.createElement('div');
+        const style = document.createElement('style');
 
+        const face_down = this.getAttribute('face-down');
 
-        const this_ = this;
+        this.sort = (by: string[] = ['V', 'S']) => {}
 
-        const observer = new MutationObserver(() => {
-            const a: Card[] = Array.from(this_.Element.childNodes) as Card[];
+        this.add = (...cards: Card[]) => {
 
-        });
-        observer.observe(this.Element, { childList: true });
-        shadow.append( this.Style, this.Element);
-    }
-
-    get Element() : HTMLDivElement {
-        if (this._el === undefined) {
-            const el = <HTMLDivElement>document.createElement('div');
-            el.className = 'stock';
-            el.append(...this.Cards);
-            this._el = el;
+            el.append(...cards);
+            if (face_down !== null)
+                for (const c of cards)
+                    c.FaceDown = (face_down === 'true');
         }
-        return this._el;
-    }
 
-    Add(...cards: Card[]) {
-        this.Element.append(...cards);
-    }
-
-
-    get Cards(): Card[] {
-            return Array.from(this._el.childNodes) as Card[];
-    }
-    // Deal from top/beginning of stock
-    Deal(num: number = 1) : Card | Card[] | undefined {
-        if (num > this.Cards.length)
-            num = this.Cards.length;
-        if (num === 0)
-            return undefined;
-
-        const dealt_cards = this.Cards.splice(0, num);
-        this.Element.innerHTML = '';
-        this.Element.append(...this.Cards);
-        return num == 1 ? dealt_cards[0] : dealt_cards;
-    }
+        this.deal = ( to: Stock, ...cards: Card[]) => {
+            if (cards.length === 0)
+                cards = [el.firstChild as Card];
+            to.add(...cards);
+        }
 
 
-    get Style(): HTMLStyleElement {
-        if (this._style === undefined) {
-            const style = document.createElement('style');
-            style.textContent = `
-        .stock {
+        el.className = layout;
+
+        this._el = el;
+        this._style = style;
+
+
+        // Append cards ctor parameters to container div
+        for (const c of cards) {
+            c.FaceDown = (face_down === 'true');
+            el.append(c);
+        }
+        el.append(...cards);
+
+        // Append children of this node to container div
+        cards = Array.from(this.querySelectorAll('playing-card'))
+        for (const c of cards) {
+            c.FaceDown = (face_down === 'true');
+            el.append(c);
+        }
+
+        // noinspection CssInvalidPropertyValue
+        style.textContent = `
+        .fan {
+            height: ${Card.height + 20}px;
             border: 1px black;
             --card-spacing: 40px;
+            --num-cards:13;
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
+        }
+        .pile {
+            height: ${Card.height + 20}px;
+            border: 1px black;
+            --card-spacing: 2px;
             --num-cards: 52;
             background-image: linear-gradient(#529610, #2f5609);
             display: grid;
             grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
         }
+
 `;
-            this._style = style;
 
-
-        }
-        return this._style;
+        shadow.append( style, el);
     }
+
+
+    get Cards(): Card[] {
+        return Array.from(this._el.childNodes) as Card[];
+    }
+
+    set Cards( cards) {
+        this._el.innerHTML = '';
+        this._el.append(...cards);
+    }
+
+
+
 }
 customElements.define('card-stock', Stock);
+
+
+class DeckStock extends Stock {
+    constructor() {
+        super('pile', ...new Deck().shuffle());
+
+    }
+}
+customElements.define('deck-stock', DeckStock);

@@ -68,7 +68,7 @@
 
         .barter-game-container {
             display: grid;
-            grid-template-rows:1fr 1fr 1fr;
+            grid-template-rows:minmax(100px, auto) minmax(100px, auto) minmax(100px, auto);
             grid-template-columns: 3fr 1fr;
             grid-template-areas:
                     "therapist-stock therapist-status"
@@ -103,9 +103,10 @@
         }
 
     </style>
- </head>
+</head>
+
 <body>
-<playing-card value="JC"></playing-card>
+
 <div class="app-container">
     <div class="header">
         <span>Header</span>
@@ -115,22 +116,28 @@
     </div>
     <div class="pages">
         <div class="page" id="page-1">
-            <playing-card value="KS"></playing-card>
+
         </div>
         <div class="page" id="page-2">
             <div class="barter-game-container">
+                <deck-stock face-down="true"  style="grid-area: auction-item"></deck-stock>
 
-                <div style="grid-area: therapist-stock">
-                    <card-stock>
-                        <playing-card value="9C"></playing-card>
-                        <playing-card value="8C"></playing-card>
-                    </card-stock>
-                </div>
-                <div class="subject"></div>
+                <card-stock face-down="true" style="grid-area: therapist-stock">
+
+                </card-stock>
+
+                <card-stock style="grid-area: auction-stock">
+                </card-stock>
+
+                <card-stock face-down="false" style="grid-area: subject-stock">
+
+                </card-stock>
+
+
             </div>
         </div>
         <div class="page" id="page-3">
-            <playing-card value="2D" face-down="true"></playing-card>
+
         </div>
     </div>
     <div class="footer">
@@ -139,6 +146,7 @@
 </div>
 
 <script>
+
     // Disable MS Edge (and probably Chrome) context menus in OSX
     document.addEventListener('contextmenu', event => { event.preventDefault() })
 
