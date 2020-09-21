@@ -52,7 +52,7 @@ class Card extends HTMLElement {
             this.suit = suit;
             this.face_value = face_value;
         }
-
+        this.Element.setAttribute('name', `${Card.FaceNames[this.face_value]} of ${Card.SuitNames[this.suit]}`);
         shadow.append( this.Style, this.Element);
 
     }
@@ -78,7 +78,6 @@ class Card extends HTMLElement {
 
         if (raised) {
             img_el.style.zIndex = `${++Card.top_z_index}`;
-
             img_el.classList.add('raised');
         } else {
             img_el.style.zIndex = '';
@@ -93,14 +92,11 @@ class Card extends HTMLElement {
 
         const img_el = this.Element;
 
-        if (selected) {
-
-            img_el.style.zIndex = (++Card.top_z_index).toFixed(0);
+        if (selected)
             img_el.classList.add('selected');
-        } else {
-            img_el.style.zIndex = '';
+        else
             img_el.classList.remove('selected')
-        }
+
     }
 
     get ImgElement() : HTMLImageElement {
@@ -143,8 +139,11 @@ class Card extends HTMLElement {
 
             el.className = 'card';
 
+            const select = (e: MouseEvent) => {
+                this_.Selected =  !this_.Selected;
+            }
             // https://stackoverflow.com/questions/9334084/moveable-draggable-div
-            el.addEventListener('mousedown',  (e: MouseEvent) => {
+           const dragStart =  (e: MouseEvent) => {
                 let dragged = false;
 
                 const face_down = this_.FaceDown;
@@ -156,16 +155,11 @@ class Card extends HTMLElement {
                 if (e.getModifierState('Control'))
                     this_.FaceDown = false;
 
-                if (e.getModifierState('Shift'))
-                    this_.Selected =  !this_.Selected;
 
-
-                function drag(e: MouseEvent) {
+                this_.Raised =  true;
+                function dragging(e: MouseEvent) {
                     if (!dragged) {
                         dragged = true;
-                        if (!e.getModifierState('Alt'))
-                            this_.Raised =  true;
-
                     }
                     el.style.top = (e.clientY - offsetY) + 'px';
                     el.style.left = (e.clientX - offsetX) + 'px';
@@ -173,7 +167,7 @@ class Card extends HTMLElement {
 
                 function dragEnd(e: MouseEvent) {
 
-                    window.removeEventListener('mousemove', drag);
+                    window.removeEventListener('mousemove', dragging);
                     window.removeEventListener('mouseup', dragEnd);
                     // el.style.top = (e.clientY - offsetY) + 'px';
                     // el.style.left = (e.clientX - offsetX) + 'px';
@@ -193,9 +187,19 @@ class Card extends HTMLElement {
 
                 }
 
-                window.addEventListener('mousemove', drag);
+                window.addEventListener('mousemove', dragging);
                 window.addEventListener('mouseup', dragEnd);
-            });
+            }
+
+            const onMouseDown = (e: MouseEvent) => {
+               if (e.getModifierState('Shift'))
+                   select(e);
+               else
+                   dragStart(e);
+            }
+
+            el.addEventListener('mousedown', onMouseDown);
+
             this._el = el;
             this._img_el = img_el;
             this._img_src = img_el.src;
@@ -229,7 +233,39 @@ class Card extends HTMLElement {
         }
         .card.selected {
             border-radius: 10px;
-            box-shadow: 0 0 10px #ff6f00;
+            box-shadow: 0 0 3px #ffffff;
+        }
+        
+        /*.card:hover::after {*/
+        /*    content: attr(name);*/
+        /*    position: absolute;*/
+        /*    left: 0;*/
+        /*    bottom: 24px;*/
+        /*    border: 1px #aaaaaa solid;*/
+        /*    border-radius: 5px;*/
+        /*    background-color: #ffffcc;*/
+        /*    padding: 12px;*/
+        /*    color: #000000;*/
+        /*    font-size: 14px;*/
+        /*    z-index: 1;*/
+        /*    }*/
+   
+     
+        
+        .card.selected::after {
+        content: attr(foo);
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            border: 1px #aaaaaa solid;
+            border-radius: 10px;
+            background-image: linear-gradient(rgba(255,255,255,0.0), rgba(255,111,0,0.9));
+            padding: 12px;
+            color: #000000;
+            font-size: 14px;
+   
         }
             `;
             this._style = style;
