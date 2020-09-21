@@ -232,40 +232,121 @@ class Card extends HTMLElement {
 
 customElements.define('playing-card', Card);
 
-class Deck extends Array<Card> {
 
-    static readonly SZ = 52;
+// class Cards extends Array<Card> {
+//
+//     static readonly SZ = 52;
+//
+//     shuffle: () => void;
+//
+//     constructor(...cards: Card[]) {
+//         super(...cards);
+//
+//         this.shuffle = () => {
+//             // Knuth shuffle
+//             for (let i = this.length; i > 0;) {
+//                 const j = Math.floor(Math.random() * i);
+//                 --i;
+//                 const tmp = this[i];
+//                 this[i] = this[j];
+//                 this[j] = tmp;
+//             }
+//         }
+//     }
+// }
+//
+// class Deck extends Cards {
+//     constructor() {
+//         super();
+//         for (let suit = 0; suit < Card.SuitNames.length; ++suit)
+//             for (let value = 0; value < Card.FaceNames.length; ++value) {
+//                 this.push(new Card(suit, value));
+//             }
+//     }
+//
+// }
 
-    shuffle: () => void;
 
-
-    constructor() {
-        super();
-        for (let suit = 0; suit < Card.SuitNames.length; ++suit)
-            for (let value = 0; value < Card.FaceNames.length; ++value) {
-                this.push(new Card(suit, value));
-            }
-
-        this.shuffle = () => {
-            // Knuth shuffle
-            for (let i = this.length; i > 0;) {
-                const j = Math.floor(Math.random() * i);
-                --i;
-                const tmp = this[i];
-                this[i] = this[j];
-                this[j] = tmp;
-            }
-        }
-    }
-}
 /*
 A set of cards (e,g, a whole deck, a tableau, a hand) sorted and grouped.
-The display property controls how the stock appears:
+The 'layout' property controls how the stock appears:
 'fan':
+'tableau'
+
 
 
 
  */
-class Stock {
+class Stock extends HTMLElement {
+    private _el!: HTMLDivElement;
+    private _style!: HTMLStyleElement;
 
+
+    constructor(...cards: Card[]) {
+        super();
+        const shadow = this.attachShadow({mode: 'open'}); // sets and returns 'this.shadowRoot'
+
+
+        const this_ = this;
+
+        const observer = new MutationObserver(() => {
+            const a: Card[] = Array.from(this_.Element.childNodes) as Card[];
+
+        });
+        observer.observe(this.Element, { childList: true });
+        shadow.append( this.Style, this.Element);
+    }
+
+    get Element() : HTMLDivElement {
+        if (this._el === undefined) {
+            const el = <HTMLDivElement>document.createElement('div');
+            el.className = 'stock';
+            el.append(...this.Cards);
+            this._el = el;
+        }
+        return this._el;
+    }
+
+    Add(...cards: Card[]) {
+        this.Element.append(...cards);
+    }
+
+
+    get Cards(): Card[] {
+            return Array.from(this._el.childNodes) as Card[];
+    }
+    // Deal from top/beginning of stock
+    Deal(num: number = 1) : Card | Card[] | undefined {
+        if (num > this.Cards.length)
+            num = this.Cards.length;
+        if (num === 0)
+            return undefined;
+
+        const dealt_cards = this.Cards.splice(0, num);
+        this.Element.innerHTML = '';
+        this.Element.append(...this.Cards);
+        return num == 1 ? dealt_cards[0] : dealt_cards;
+    }
+
+
+    get Style(): HTMLStyleElement {
+        if (this._style === undefined) {
+            const style = document.createElement('style');
+            style.textContent = `
+        .stock {
+            border: 1px black;
+            --card-spacing: 40px;
+            --num-cards: 52;
+            background-image: linear-gradient(#529610, #2f5609);
+            display: grid;
+            grid-template-columns: repeat(var(--num-cards), var(--card-spacing));
+        }
+`;
+            this._style = style;
+
+
+        }
+        return this._style;
+    }
 }
+customElements.define('card-stock', Stock);
