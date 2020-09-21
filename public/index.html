@@ -70,7 +70,7 @@
         .barter-game-container {
             display: grid;
             grid-template-rows:minmax(100px, auto) minmax(100px, auto) minmax(100px, auto);
-            grid-template-columns: 3fr 1fr;
+            grid-template-columns: auto 200px;
             grid-template-areas:
                     "therapist-stock therapist-status"
                     "auction-stock auction-item"
@@ -112,21 +112,24 @@
 
         </div>
         <div class="page" id="page-2">
-            <div class="barter-game-container">
-                <deck-stock face-down="true"  style="grid-area: auction-item"></deck-stock>
+            <card-game>
 
-                <card-stock face-down="true" style="grid-area: therapist-stock">
+            </card-game>
+<!--            <div class="barter-game-container">-->
+<!--                <deck-stock face-down="true"  style="grid-area: auction-item"></deck-stock>-->
 
-                </card-stock>
+<!--                <card-stock face-down="true" style="grid-area: therapist-stock">-->
 
-                <card-stock layout="grid" style="grid-area: auction-stock">
-                </card-stock>
+<!--                </card-stock>-->
 
-                <card-stock face-down="false" style="grid-area: subject-stock">
+<!--                <card-stock layout="grid" style="grid-area: auction-stock">-->
+<!--                </card-stock>-->
 
-                </card-stock>
+<!--                <card-stock face-down="false" style="grid-area: subject-stock">-->
 
-            </div>
+<!--                </card-stock>-->
+
+<!--            </div>-->
         </div>
         <div class="page" id="page-3">
 

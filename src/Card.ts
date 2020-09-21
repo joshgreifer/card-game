@@ -57,6 +57,23 @@ export class Card extends HTMLElement {
 
     }
 
+    public DropIntoStockFromPoint(x: number, y: number, root:DocumentOrShadowRoot = document) : Stock | null {
+        const droppedElements = root.elementsFromPoint(x, y);
+        for (const drop_target of droppedElements)
+            if(drop_target instanceof Stock) {
+                drop_target.add(this);
+                return drop_target;
+            } else {
+                const shadow = drop_target.shadowRoot;
+                if (shadow !== null) {
+                    const stock = this.DropIntoStockFromPoint(x,y, shadow);
+                        if (stock !== null)
+                            return stock;
+                }
+
+            }
+        return  null;
+    }
     private _drop_callback?: (els: Element[]) => void;
 
     private _selected: boolean = false;
@@ -175,13 +192,7 @@ export class Card extends HTMLElement {
                     this_.Raised = false;
                     this_.FaceDown = face_down;
                     if (dragged) {
-                        const droppedElements = document.elementsFromPoint(e.x, e.y);
-                        for (const drop_target of droppedElements)
-                            if(drop_target instanceof Stock)
-                                drop_target.add(this_);
-                        if (this_._drop_callback && droppedElements !== null)
-                            this_._drop_callback(droppedElements);
-
+                        this_.DropIntoStockFromPoint(e.x, e.y);
                     }
 
 
@@ -443,8 +454,6 @@ export class Stock extends HTMLElement {
         this._el.innerHTML = '';
         this._el.append(...cards);
     }
-
-
 
 }
 
