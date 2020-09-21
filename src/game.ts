@@ -1,5 +1,8 @@
 
-const template_html_string = `
+
+
+export class CardGame extends HTMLElement {
+    private static readonly _template = `
 <style>
        .barter-game-container {
             display: grid;
@@ -30,14 +33,11 @@ const template_html_string = `
             </div>
 
 `;
-
-
-export class CardGame extends HTMLElement {
     constructor() {
         super();
         const shadow = this.attachShadow({mode: 'open'});
         let template = document.createElement('template');
-        template.innerHTML = template_html_string;
+        template.innerHTML = CardGame._template;
         let templateContent = template.content.cloneNode(true);
 
         shadow.append(templateContent);
