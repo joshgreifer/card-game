@@ -2,6 +2,9 @@
 
 import {DeckStock, Stock} from "./Card";
 import {CardGame} from "./game";
+import {AddAlgorithms} from "./ArrayPlus";
+
+AddAlgorithms();
 
 customElements.define('card-stock', Stock);
 customElements.define('deck-stock', DeckStock);

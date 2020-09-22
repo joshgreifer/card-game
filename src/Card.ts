@@ -1,9 +1,10 @@
 
 // Playing Card
+
 export class Card extends HTMLElement {
     private static top_z_index = 0;
     private static  readonly deck_img = `${__webpack_public_path__}/assets/img/cards_deck.svg`;
-    private static  readonly back_img = `${__webpack_public_path__}/assets/img/card_back.svg`;
+    private static  readonly back_img = `${__webpack_public_path__}/assets/img/card_back_red.svg`;
 
     private static readonly original_grid_x = 390;
     private static readonly original_grid_y = 570;
@@ -32,9 +33,12 @@ export class Card extends HTMLElement {
     private _img_src!: string;
     private _raised: boolean = false;
 
+    private readonly _deck?: Deck ;
+    private _drag_enabled: boolean = true;
+    private _select_enabled: boolean = true;
+    private _peek_enabled: boolean = true;
 
-
-    constructor(suit?: number, face_value? : number) {
+    constructor(suit?: number, face_value? : number, deck?  : Deck) {
         super();
         const shadow = this.attachShadow({mode: 'open'}); // sets and returns 'this.shadowRoot'
 
@@ -52,6 +56,8 @@ export class Card extends HTMLElement {
             this.suit = suit;
             this.face_value = face_value;
         }
+        this._deck = deck;
+
         this.Element.setAttribute('name', `${Card.FaceNames[this.face_value]} of ${Card.SuitNames[this.suit]}`);
         shadow.append( this.Style, this.Element);
 
@@ -101,6 +107,14 @@ export class Card extends HTMLElement {
             img_el.classList.remove('raised')
         }
     }
+    get Draggable() : boolean { return this._drag_enabled;  }
+    set Draggable(draggable: boolean) { this._drag_enabled = draggable; }
+    
+    get Peekable() : boolean { return this._peek_enabled;  }
+    set Peekable(peekable: boolean) { this._peek_enabled = peekable; }
+
+    get Selectable() : boolean { return this._select_enabled;  }
+    set Selectable(selectable: boolean) { this._select_enabled = selectable; }
 
     get Selected() : boolean { return this._selected;  }
     set Selected(selected) {
@@ -124,13 +138,13 @@ export class Card extends HTMLElement {
     get FaceDown() : boolean { return this._face_down; }
     set FaceDown(face_down: boolean) {
         this._face_down = face_down;
-        this._img_el.src = face_down ?  Card.back_img : this._img_src;
+        this._img_el.src = face_down ?  (this._deck ? this._deck.back_img :  Card.back_img) : this._img_src;
     }
 
     static get observedAttributes() : string[] { return ['face-down']}
 
     attributeChangedCallback(name: string, oldValue : any, newValue: any) {
-        console.log('Custom square element attributes changed.');
+        console.log(`Card: ${name} attribute changed from '${oldValue}' to '${newValue}'`);
         switch (name) {
             case 'face-down':
                 this.FaceDown = newValue;
@@ -170,7 +184,7 @@ export class Card extends HTMLElement {
                 const offsetY = e.clientY - parseInt(window.getComputedStyle(el).top);
 
                 if (e.getModifierState('Control'))
-                    this_.FaceDown = false;
+                    if (this_._peek_enabled ) this_.FaceDown = false;
 
 
                 this_.Raised =  true;
@@ -204,9 +218,9 @@ export class Card extends HTMLElement {
 
             const onMouseDown = (e: MouseEvent) => {
                if (e.getModifierState('Shift'))
-                   select(e);
+                   if (this._select_enabled)  select(e);
                else
-                   dragStart(e);
+                   if (this._drag_enabled) dragStart(e);
             }
 
             el.addEventListener('mousedown', onMouseDown);
@@ -224,7 +238,7 @@ export class Card extends HTMLElement {
             style.textContent = `
        .card {
             position: relative;
-            margin: 10px;
+            margin: 1px;
         }
 
         .card img {
@@ -290,53 +304,25 @@ export class Card extends HTMLElement {
 
 customElements.define('playing-card', Card);
 
-
-// class Cards extends Array<Card> {
-//
-//     static readonly SZ = 52;
-//
-//     shuffle: () => void;
-//
-//     constructor(...cards: Card[]) {
-//         super(...cards);
-//
-//         this.shuffle = () => {
-//             // Knuth shuffle
-//             for (let i = this.length; i > 0;) {
-//                 const j = Math.floor(Math.random() * i);
-//                 --i;
-//                 const tmp = this[i];
-//                 this[i] = this[j];
-//                 this[j] = tmp;
-//             }
-//         }
-//     }
-// }
-//
-
 class Deck extends Array<Card> {
-    shuffle: () => Deck;
+    back_img: string;
+    static back_idx = 0;
+    static card_backs = [
+        `${__webpack_public_path__}/assets/img/card_back_red.svg`,
+        `${__webpack_public_path__}/assets/img/card_back_blue.svg`
+    ];
 
     constructor() {
         super();
+        this.back_img = Deck.card_backs[Deck.back_idx];
+        if (++Deck.back_idx >= Deck.card_backs.length)
+            Deck.back_idx = 0;
+
         for (let suit = 0; suit < Card.SuitNames.length; ++suit)
             for (let value = 0; value < Card.FaceNames.length; ++value) {
-                this.push(new Card(suit, value));
+                this.push(new Card(suit, value, this));
             }
-        this.shuffle = () => {
-            const cards = this;
-            // Knuth shuffle
-            for (let i = cards.length; i > 0;) {
-                const j = Math.floor(Math.random() * i);
-                --i;
-                const tmp = cards[i];
-                cards[i] = cards[j];
-                cards[j] = tmp;
-            }
-            return this;
-        }
-    }
-
+     }
 
 }
 
@@ -389,7 +375,7 @@ export class Stock extends HTMLElement {
         }
         .pile {
             height: ${Card.height + 20}px;
-            border: 1px black;
+            border: 1px #0c64fb;
             --card-spacing: 2px;
             --num-cards: 52;
             background-image: linear-gradient(#529610, #2f5609);
@@ -400,6 +386,9 @@ export class Stock extends HTMLElement {
         .grid {
             background-image: linear-gradient(#529610, #2f5609);
             display: grid;
+            row-gap: 0;
+            column-gap: 0;
+            gap: 0;
             grid-template-columns: repeat(13, auto);
             grid-template-rows: repeat(4, auto);
         }
@@ -424,6 +413,8 @@ export class Stock extends HTMLElement {
                     c.FaceDown = (face_down === 'true');
         }
 
+        // if (el.classList.contains('stack'))
+
         this.deal = ( to: Stock, ...cards: Card[]) => {
             if (cards.length === 0)
                 cards = [el.firstChild as Card];
@@ -443,10 +434,14 @@ export class Stock extends HTMLElement {
         this._el = el;
         this._style = style;
 
+        console.log(this.Cards);
+        // @ts-ignore
+        console.log(this.Cards.partition((card:Card) => { return Card.FaceNames[card.face_value] } ))
+
     }
 
 
-    get Cards(): Card[] {
+    get Cards(): Array<Card> {
         return Array.from(this._el.childNodes) as Card[];
     }
 
@@ -459,6 +454,7 @@ export class Stock extends HTMLElement {
 
 export class DeckStock extends Stock {
     constructor() {
+        // @ts-ignore
         super('pile', ...new Deck().shuffle());
 
     }

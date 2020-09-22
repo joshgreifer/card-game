@@ -23,8 +23,8 @@ export class CardGame extends HTMLElement {
 
                 </card-stock>
 
-                <card-stock layout="grid" style="grid-area: auction-stock">
-                </card-stock>
+                <deck-stock layout="grid" style="grid-area: auction-stock">
+                </deck-stock>
 
                 <card-stock face-down="false" style="grid-area: subject-stock">
 
