@@ -57,7 +57,9 @@ export class Card extends HTMLElement {
             this.face_value = face_value;
         }
         this._deck = deck;
-
+        this._drag_enabled = true;
+        this._select_enabled= true;
+        this._peek_enabled = true;
         this.Element.setAttribute('name', `${Card.FaceNames[this.face_value]} of ${Card.SuitNames[this.suit]}`);
         shadow.append( this.Style, this.Element);
 
@@ -73,8 +75,8 @@ export class Card extends HTMLElement {
                 const shadow = drop_target.shadowRoot;
                 if (shadow !== null) {
                     const stock = this.DropIntoStockFromPoint(x,y, shadow);
-                        if (stock !== null)
-                            return stock;
+                    if (stock !== null)
+                        return stock;
                 }
 
             }
@@ -109,7 +111,7 @@ export class Card extends HTMLElement {
     }
     get Draggable() : boolean { return this._drag_enabled;  }
     set Draggable(draggable: boolean) { this._drag_enabled = draggable; }
-    
+
     get Peekable() : boolean { return this._peek_enabled;  }
     set Peekable(peekable: boolean) { this._peek_enabled = peekable; }
 
@@ -174,7 +176,7 @@ export class Card extends HTMLElement {
                 this_.Selected =  !this_.Selected;
             }
             // https://stackoverflow.com/questions/9334084/moveable-draggable-div
-           const dragStart =  (e: MouseEvent) => {
+            const dragStart =  (e: MouseEvent) => {
                 let dragged = false;
 
                 const face_down = this_.FaceDown;
@@ -217,10 +219,10 @@ export class Card extends HTMLElement {
             }
 
             const onMouseDown = (e: MouseEvent) => {
-               if (e.getModifierState('Shift'))
-                   if (this._select_enabled)  select(e);
-               else
-                   if (this._drag_enabled) dragStart(e);
+                if (e.getModifierState('Shift') && this._select_enabled)
+                    select(e);
+                else
+                    if (this._drag_enabled) dragStart(e);
             }
 
             el.addEventListener('mousedown', onMouseDown);
@@ -322,7 +324,7 @@ class Deck extends Array<Card> {
             for (let value = 0; value < Card.FaceNames.length; ++value) {
                 this.push(new Card(suit, value, this));
             }
-     }
+    }
 
 }
 
