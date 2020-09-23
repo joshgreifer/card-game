@@ -1,5 +1,6 @@
 node_modules
 dist
 package-lock.json
-*.js.map
-*.js
+src/**.js.map
+# Assumes all source is TypeScript
+src/**.js
